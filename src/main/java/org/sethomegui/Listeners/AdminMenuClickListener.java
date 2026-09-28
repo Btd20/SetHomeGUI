@@ -14,6 +14,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.sethomegui.SetHomeGUI;
+import org.sethomegui.Utils.MenuActions;
 import org.sethomegui.Utils.Utils;
 import org.sethomegui.Managers.*;
 
@@ -50,6 +51,16 @@ public class AdminMenuClickListener implements Listener {
         ItemStack clicked = event.getCurrentItem();
         int slot = event.getSlot();
         if (clicked == null || clicked.getType() == Material.AIR || !clicked.hasItemMeta()) return;
+
+        // Los comandos personalizados de gui.yml sustituyen a la acción interna del ítem
+        String menuPath = holder instanceof AdminMainHolder ? "gui.admin-gui"
+                : holder instanceof AdminHomesHolder ? "gui.admin-gui.admin-player-homes-gui"
+                : "gui.admin-gui.admin-confirmation-gui";
+
+        if (MenuActions.execute(plugin, admin, plugin.getGuisConfig().getSection(menuPath), slot)) {
+            admin.playSound(admin.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+            return;
+        }
 
         AdminGUIManager manager = plugin.getAdminGUIManager();
         String action = clicked.getItemMeta().getPersistentDataContainer().get(manager.actionKey, PersistentDataType.STRING);

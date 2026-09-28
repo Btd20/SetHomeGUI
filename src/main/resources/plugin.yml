@@ -32,6 +32,9 @@ permissions:
   sethome.maxhomes.*:
     description: Wildcard permission for home limits.
     default: false
+  sethome.maxhomes.unlimited:
+    description: Allows creating unlimited homes, ignoring any numeric limit.
+    default: false
   sethome.cooldown.bypass:
     description: Allows players to teleport instantly without triggering the countdown.
     default: op

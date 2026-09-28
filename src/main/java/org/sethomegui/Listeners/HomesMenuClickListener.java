@@ -12,6 +12,7 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.sethomegui.SetHomeGUI;
+import org.sethomegui.Utils.MenuActions;
 import org.sethomegui.Utils.Utils;
 
 import java.io.IOException;
@@ -67,6 +68,12 @@ public class HomesMenuClickListener implements Listener {
         if (clickedItem == null || !clickedItem.hasItemMeta()) return;
 
         int clickedSlot = event.getSlot();
+
+        // Los comandos personalizados de gui.yml sustituyen a la acción interna del ítem
+        if (MenuActions.execute(plugin, player, homesSection, clickedSlot)) {
+            plugin.getGuiManager().playConfiguredClickSound(player, "homes-gui");
+            return;
+        }
 
         // --- ACCIÓN 1: BOTONES FIJOS ---
         // La acción se resuelve por el ítem (PDC) y no por su posición fija, de modo que

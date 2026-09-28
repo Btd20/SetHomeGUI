@@ -1,3 +1,31 @@
+# ==========================================================================
+#                   CUSTOM ACTIONS (RUN COMMANDS ON CLICK)
+# ==========================================================================
+# ANY item of ANY menu below can run server commands when clicked.
+# Just add a "commands" list (or a single "command") to the item:
+#
+#   my-custom-button:
+#     type: NETHER_STAR
+#     slot: 4
+#     display-name: "&aBack to the server menu"
+#     close-inventory: true          # optional, default: true
+#     commands:
+#       - "[player] menu"                            # run by the player
+#       - "[console] say %player_name% went back"    # run by the console
+#
+# Executor prefixes:
+#   [player]   -> the command runs as the player (their permissions apply)
+#   [console]  -> the command runs as the server console (full permissions)
+#   no prefix  -> defaults to [player]
+#
+# The leading "/" is optional. Every PlaceholderAPI placeholder works here,
+# plus %player_name%. Color codes are NOT translated inside commands, since
+# that would corrupt them before the server reads them.
+#
+# IMPORTANT: if an item defines commands, they REPLACE its built-in action.
+# Do not add commands to items like "back", "next-page" or "confirm-button"
+# unless you intend to override what they normally do.
+
 gui:
   main-gui:
     title: "&8SetHome GUI &7- Menu"

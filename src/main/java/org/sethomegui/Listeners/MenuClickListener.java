@@ -8,6 +8,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.sethomegui.SetHomeGUI;
+import org.sethomegui.Utils.MenuActions;
 import org.sethomegui.Utils.Utils;
 
 import java.util.List;
@@ -44,6 +45,13 @@ public class MenuClickListener implements Listener {
         // Así el click sigue funcionando aunque el administrador reubique el ítem.
         YamlDocument guiConfig = plugin.getGuisConfig();
         Section mainSection = guiConfig.getSection("gui.main-gui");
+
+        // Los comandos personalizados definidos en gui.yml sustituyen a la acción interna del ítem
+        if (MenuActions.execute(plugin, player, mainSection, event.getSlot())) {
+            plugin.getGuiManager().playConfiguredClickSound(player, "main-gui");
+            return;
+        }
+
         String clickedItemKey = Utils.resolveMenuAction(plugin, clickedItem, mainSection, event.getSlot());
 
         // Si el ítem no tiene ninguna acción asociada (ej: decoración), salimos

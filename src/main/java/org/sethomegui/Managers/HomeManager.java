@@ -7,6 +7,7 @@ import org.sethomegui.SetHomeGUI;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public class HomeManager {
@@ -77,41 +78,70 @@ public class HomeManager {
         }
     }
 
+    /** Valor que el resto del plugin interpreta como "sin límite". */
+    public static final int UNLIMITED = -1;
+
+    /** Permiso que otorga hogares ilimitados, por encima de cualquier límite numérico. */
+    public static final String PERMISSION_UNLIMITED = "sethome.maxhomes.unlimited";
+
+    /** Prefijo de los permisos de límite numérico (ej: sethome.maxhomes.10). */
+    private static final String PERMISSION_PREFIX = "sethome.maxhomes.";
+
     /**
      * Calcula el límite máximo de hogares de un jugador basado en sus permisos y la config general.
-     * Si devuelve -1, significa que el jugador tiene hogares ilimitados.
+     * Si devuelve -1 ({@link #UNLIMITED}), significa que el jugador tiene hogares ilimitados.
+     *
+     * Orden de prioridad:
+     *   1. sethome.maxhomes.unlimited  -> ilimitado, gana siempre
+     *   2. sethome.maxhomes.&lt;numero&gt; -> el valor más alto concedido
+     *   3. default-max-homes del config.yml (-1 también significa ilimitado)
      */
     public int getPlayerMaxHomes(org.bukkit.entity.Player player) {
-        int maxFromConfig = plugin.getMainConfig().getInt("default-max-homes", 3);
-        int maxFromPermission = -2; // Valor centinela para saber si encontramos un permiso
+        // 1. El permiso de ilimitado gana siempre, sin importar los límites numéricos que tenga.
+        //    Usamos hasPermission para que respete herencia de grupos y negaciones del gestor de permisos.
+        if (player.hasPermission(PERMISSION_UNLIMITED)) {
+            return UNLIMITED;
+        }
+
+        int maxFromPermission = Integer.MIN_VALUE; // Centinela: aún no encontramos ningún permiso
 
         // Escaneamos los permisos efectivos del jugador (funciona perfectamente con LuckPerms)
         for (org.bukkit.permissions.PermissionAttachmentInfo attachment : player.getEffectivePermissions()) {
-            String permission = attachment.getPermission().toLowerCase();
+            // Un permiso NEGADO (valor false) aparece igualmente en la lista efectiva
+            // y no debe otorgar ningún límite.
+            if (!attachment.getValue()) continue;
 
-            if (permission.startsWith("sethome.maxhomes.")) {
-                try {
-                    String numberStr = permission.substring("sethome.maxhomes.".length());
-                    int val = Integer.parseInt(numberStr);
+            String permission = attachment.getPermission().toLowerCase(Locale.ROOT);
+            if (!permission.startsWith(PERMISSION_PREFIX)) continue;
 
-                    // Si el jugador pertenece a varios grupos con límites distintos,
-                    // conservamos el valor más alto otorgado.
-                    if (val > maxFromPermission) {
-                        maxFromPermission = val;
-                    }
-                } catch (NumberFormatException ignored) {
-                    // Ignorar si el permiso no termina en un número válido
+            String suffix = permission.substring(PERMISSION_PREFIX.length());
+
+            try {
+                int val = Integer.parseInt(suffix);
+
+                // Cualquier valor negativo (sethome.maxhomes.-1) significa ilimitado,
+                // igual que en default-max-homes.
+                if (val < 0) {
+                    return UNLIMITED;
                 }
+
+                // Si el jugador pertenece a varios grupos con límites distintos,
+                // conservamos el valor más alto otorgado.
+                if (val > maxFromPermission) {
+                    maxFromPermission = val;
+                }
+            } catch (NumberFormatException ignored) {
+                // Sufijo no numérico (por ejemplo el comodín '*'): no define ningún límite
             }
         }
 
-        // Si se encontró un permiso sethome.maxhomes.x, este tiene prioridad absoluta
-        if (maxFromPermission != -2) {
+        // 2. Si se encontró un permiso sethome.maxhomes.<numero>, este tiene prioridad sobre la config
+        if (maxFromPermission != Integer.MIN_VALUE) {
             return maxFromPermission;
         }
 
-        // Si no hay permisos y la config base es -1, es ilimitado
-        return maxFromConfig;
+        // 3. Sin permisos específicos manda la configuración (-1 = ilimitado)
+        return plugin.getMainConfig().getInt("default-max-homes", 3);
     }
 
     /**

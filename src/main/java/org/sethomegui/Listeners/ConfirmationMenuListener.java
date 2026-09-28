@@ -8,6 +8,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.sethomegui.SetHomeGUI;
+import org.sethomegui.Utils.MenuActions;
 import org.sethomegui.Utils.Utils;
 
 import java.io.IOException;
@@ -48,6 +49,12 @@ public class ConfirmationMenuListener implements Listener {
 
         ItemStack clickedItem = event.getCurrentItem();
         if (clickedItem == null || !clickedItem.hasItemMeta()) return;
+
+        // Los comandos personalizados de gui.yml sustituyen a la acción interna del ítem
+        if (MenuActions.execute(plugin, player, confirmSection, event.getSlot())) {
+            plugin.getGuiManager().playConfiguredClickSound(player, "confirmation-gui");
+            return;
+        }
 
         // ⚡ La acción se resuelve por el ítem (PDC) y no por su posición fija
         String clickedKey = Utils.resolveMenuAction(plugin, clickedItem, confirmSection, event.getSlot());
