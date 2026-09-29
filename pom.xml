@@ -6,7 +6,7 @@
 
     <groupId>org.sethomegui</groupId>
     <artifactId>SetHome_GUI</artifactId>
-    <version>3.0.4</version>
+    <version>3.0.5</version>
     <packaging>jar</packaging>
 
     <name>SetHome_GUI</name>
